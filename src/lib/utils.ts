@@ -12,15 +12,17 @@ export async function hashPassword(password: string) {
 }
 
 export async function getUserByEmail(email: string) {
-  try {
-    const user = await db.user.findUnique({
-      where: { email: email.toLowerCase() },
-    });
-    return user;
-  } catch (error) {
-    return null;
+    try {
+      const user = await db.user.findUnique({
+        where: { email: email.toLowerCase() },
+      });
+      return user;
+    } catch (error) {
+      console.error("Error fetching user by email:", error);
+      return null;
+    }
   }
-}
+  
 
 export function formatDate(date: Date | string) {
   const d = new Date(date);

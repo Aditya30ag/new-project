@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
-import { signIn } from "next-auth/react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect } from "react";
+import { signIn, useSession } from "next-auth/react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -28,8 +28,24 @@ const formSchema = z.object({
 
 export default function LoginPage() {
   const router = useRouter();
+  const { status } = useSession();
+  const searchParams = useSearchParams();
+  const error = searchParams.get("error");
+  
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [authError, setAuthError] = useState<string | null>(null);
+
+  useEffect(() => {
+    // If already authenticated, redirect to dashboard
+    if (status === "authenticated") {
+      router.push("/dashboard");
+    }
+    
+    // Handle error parameter from NextAuth
+    if (error) {
+      setAuthError("Invalid email or password. Please try again.");
+    }
+  }, [status, router, error]);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -41,9 +57,10 @@ export default function LoginPage() {
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setLoading(true);
-    setError(null);
+    setAuthError(null);
 
     try {
+      // Use signIn without redirect for better error handling
       const result = await signIn("credentials", {
         email: values.email,
         password: values.password,
@@ -51,15 +68,16 @@ export default function LoginPage() {
       });
 
       if (result?.error) {
-        setError("Invalid email or password");
+        setAuthError("Invalid email or password. Please try again.");
+        setLoading(false);
         return;
       }
 
+      // Successful login - redirect to dashboard
       router.push("/dashboard");
       router.refresh();
     } catch (error) {
-      setError("An unexpected error occurred. Please try again.");
-    } finally {
+      setAuthError("An unexpected error occurred. Please try again.");
       setLoading(false);
     }
   }
@@ -74,9 +92,9 @@ export default function LoginPage() {
           </p>
         </div>
 
-        {error && (
+        {authError && (
           <div className="p-3 rounded-md bg-destructive/10 text-destructive text-sm">
-            {error}
+            {authError}
           </div>
         )}
 

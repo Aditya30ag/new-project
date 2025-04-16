@@ -26,18 +26,8 @@ export default function DashboardLayout({
       router.push("/login");
     } else if (status === "authenticated") {
       setLoading(false);
-      
-      // Redirect based on user role
-      const role = session.user.role;
-      if (role === "SUPER_ADMIN" && !pathname.includes("/super-admin")) {
-        router.push("/super-admin/dashboard");
-      } else if (role === "UNIVERSITY_ADMIN" && !pathname.includes("/university-admin")) {
-        router.push("/university-admin/dashboard");
-      } else if (role === "SUB_USER" && !pathname.includes("/sub-user")) {
-        router.push("/sub-user/dashboard");
-      }
     }
-  }, [status, router, pathname, session]);
+  }, [status, router]);
 
   if (loading || status === "loading") {
     return <LoadingScreen />;
